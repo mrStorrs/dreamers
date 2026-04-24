@@ -1,0 +1,10 @@
+# Local workspace (repo-local, not part of the system definition)
+.dreamers/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
