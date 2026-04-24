@@ -5,11 +5,13 @@ An agent orchestration system for Claude Code. Dreamers coordinates specialized 
 ## Structure
 
 ```
-agents/           # Agent definitions (Forge, Sentinel, Probe, Echo, Nova, Bolt, Sage, Hone)
-commands/         # Skill entry points for each pipeline (dreamers-full, dreamers-fix, etc.)
-dreamers/
-├── refs/         # Shared reference docs (delegation protocol, git workflow, quality gates, etc.)
-└── templates/    # Plan templates, PR descriptions, logging standards
+.claude/
+├── agents/           # Agent definitions (Forge, Sentinel, Probe, Echo, Nova, Bolt, Sage, Hone)
+├── commands/         # Skill entry points for each pipeline (dreamers-full, dreamers-fix, etc.)
+├── dreamers/
+│   ├── refs/         # Shared reference docs (delegation protocol, git workflow, quality gates, etc.)
+│   └── templates/    # Plan templates, PR descriptions, logging standards
+└── CLAUDE.dreamers.md  # Managed section for CLAUDE.md
 ```
 
 ## Agents

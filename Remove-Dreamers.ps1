@@ -28,6 +28,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Get-Location }
+$Source = Join-Path $RepoRoot ".claude"
 
 # Build list of Dreamers-owned files from the repo
 $dreamersFiles = @{
@@ -38,7 +39,7 @@ $dreamersFiles = @{
 }
 
 foreach ($key in $dreamersFiles.Keys) {
-    $sourcePath = Join-Path $RepoRoot $key
+    $sourcePath = Join-Path $Source $key
     if (Test-Path $sourcePath) {
         $dreamersFiles[$key] = (Get-ChildItem $sourcePath -File).Name
     }

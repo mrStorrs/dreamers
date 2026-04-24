@@ -28,6 +28,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Get-Location }
+$Source = Join-Path $RepoRoot ".claude"
+
+if (-not (Test-Path $Source)) {
+    Write-Error "Cannot find .claude/ directory at '$Source'. Run this script from the repo root."
+    exit 1
+}
 
 function Copy-Files {
     param(
@@ -58,30 +64,30 @@ function Copy-Files {
 }
 
 Write-Host "`nDreamers Installer (Claude Code)" -ForegroundColor Cyan
-Write-Host "Source:  $RepoRoot"
+Write-Host "Source:  $Source"
 Write-Host "Target:  $ClaudeHome`n"
 
 $total = 0
 
 # Agents
 Write-Host "[agents]" -ForegroundColor Cyan
-$total += Copy-Files -From (Join-Path $RepoRoot "agents") -To (Join-Path $ClaudeHome "agents") -Label "agents"
+$total += Copy-Files -From (Join-Path $Source "agents") -To (Join-Path $ClaudeHome "agents") -Label "agents"
 
 # Commands (skills)
 Write-Host "[commands]" -ForegroundColor Cyan
-$total += Copy-Files -From (Join-Path $RepoRoot "commands") -To (Join-Path $ClaudeHome "commands") -Label "commands"
+$total += Copy-Files -From (Join-Path $Source "commands") -To (Join-Path $ClaudeHome "commands") -Label "commands"
 
 # Dreamers refs
 Write-Host "[dreamers/refs]" -ForegroundColor Cyan
-$total += Copy-Files -From (Join-Path $RepoRoot "dreamers" "refs") -To (Join-Path $ClaudeHome "dreamers" "refs") -Label "refs"
+$total += Copy-Files -From (Join-Path $Source "dreamers" "refs") -To (Join-Path $ClaudeHome "dreamers" "refs") -Label "refs"
 
 # Dreamers templates
 Write-Host "[dreamers/templates]" -ForegroundColor Cyan
-$total += Copy-Files -From (Join-Path $RepoRoot "dreamers" "templates") -To (Join-Path $ClaudeHome "dreamers" "templates") -Label "templates"
+$total += Copy-Files -From (Join-Path $Source "dreamers" "templates") -To (Join-Path $ClaudeHome "dreamers" "templates") -Label "templates"
 
 # CLAUDE.md (marker-based merge)
 Write-Host "[CLAUDE.md]" -ForegroundColor Cyan
-$dreamersFragment = Join-Path $RepoRoot "CLAUDE.dreamers.md"
+$dreamersFragment = Join-Path $Source "CLAUDE.dreamers.md"
 $targetInstructions = Join-Path $ClaudeHome "CLAUDE.md"
 $startMarker = "<!-- DREAMERS-START"
 $endMarker = "<!-- DREAMERS-END -->"
