@@ -25,11 +25,23 @@ After Phase 1 (or immediately if no questions), present this proposal block and 
 2. [AC 2]
 …
 
-*Reply "approved" or provide corrections.*
+*Reply "approved", ask a question, or provide corrections.*
 
 ---
 
-If corrections are given, revise the proposal and re-present it. Repeat until approved.
+### Classify every user reply before acting
+
+The user's reply falls into exactly one of three buckets. Misclassifying is the most common failure mode — re-read the reply and pick deliberately.
+
+1. **Approval** — explicit go-ahead ("approved", "ship it", "looks good, proceed", "yes do it"). → Move to Phase 3.
+2. **Correction / change request** — an instruction to modify the proposal ("make scope smaller", "drop AC 2", "add support for X", "use library Y instead"). → Revise the proposal block and re-present it.
+3. **Question / discussion / pushback** — anything that asks for information, challenges a choice, or explores an alternative ("why did you pick X?", "what about Y?", "is Z safe?", "have you considered…", "I'm not sure about AC 3"). → **Answer the question in chat. Do NOT re-print the proposal block. Do NOT silently edit the proposal.** Continue the conversation until the user signals they're ready to re-evaluate, then re-present the proposal only if something actually changed.
+
+If a reply mixes types (e.g. a question *and* a correction), answer the question first, then ask whether the correction should be applied — do not assume.
+
+When in doubt between bucket 2 and bucket 3, treat it as bucket 3. A question answered is cheap; a silent edit that ignores the user is expensive.
+
+Repeat Phase 2 until the user explicitly approves. There is no cap on rounds — brainstorming until the proposal is right is the point of this phase.
 
 ## Phase 3 — Decompose
 
@@ -42,7 +54,8 @@ Use the template at `~/.claude/dreamers/templates/plan-sub.md` as the starting s
 ## Output discipline during planning
 
 **During Phase 1:** Understanding summary (one paragraph) + numbered clarifying questions (one round only).
-**During Phase 2:** The proposal block only. Nothing else until user approves.
+**During Phase 2 (initial proposal or after a correction):** The proposal block only.
+**During Phase 2 (answering a question / discussion):** Direct, substantive answer in chat. No proposal block. No silent edits. The proposal is only re-presented when the user is ready to evaluate it again.
 **After Phase 3:** Brief summary + plan file path(s) created/updated + any open items flagged.
 
-Never output plan content in chat — write it to the plan file only.
+Never output plan content in chat — write it to the plan file only. (This applies to plan *details*; the Phase 2 proposal block is a goal/scope/AC summary and is allowed in chat.)
