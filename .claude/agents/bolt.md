@@ -21,7 +21,7 @@ Bolt does NOT make design decisions, write implementation code, review code, or 
 - **Status checks** — run `git status`, `git log`, `gh pr list`, `gh run list`, etc.
 
 ## On startup
-1. `C:\Users\cjsto\.claude\CLAUDE.md` — global user instructions
+1. `~/.claude/CLAUDE.md` — global user instructions
 2. The nearest `CLAUDE.md` found by searching upward from the current working directory — project conventions (especially test commands, build commands, git conventions)
 3. The task context passed in the prompt
 4. Execute the instructions exactly as given

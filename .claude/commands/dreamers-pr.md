@@ -1,3 +1,76 @@
+---
+description: 'PR creation skill — pushes the current branch (via Bolt), drafts the PR body from pr-description.md template, opens the PR via Bolt-driven gh, optionally posts an issue resolution comment. Triggers: /dreamers-pr, open the PR, ship the branch.'
+---
+
+$ARGUMENTS
+
+Template read at runtime via `Read`:
+- `~/.claude/dreamers/templates/pr-description.md` — PR body shape.
+
+## Todo - Before you begin.
+- Declare a todo list marking all steps at entry: Step 1 / Step 2 / Step 3.
+
+## Step 1 — Pre-push verification
+- `git status` — confirm clean (no unstaged/untracked production files).
+- `git log --oneline -10` — confirm commit history matches expectation.
+- Detect default branch (canonical two-step per `git-workflow`, Kernel).
+
+## Step 2 — Push (delegated to Bolt)
+- Spawn Bolt (`subagent_type: "bolt"`) to run `git push -u origin <branch>` — never force; never skip hooks.
+- If push is rejected (non-fast-forward): `git fetch origin` + rebase + re-push via Bolt. Never force.
+
+## Step 3 — Open the PR (delegated to Bolt)
+- Read `pr-description.md` template via `Read`.
+- Draft PR body using its shape (Summary / Plans shipped / Cumulative diff / End-to-end ACs / Review summary / Test plan).
+- Spawn Bolt to run `gh pr create --base <DEFAULT> --head <branch> --title "<short title>" --body <body>`. Capture PR URL from Bolt's output.
+- If `--issue <#|url>`: spawn Bolt to run `gh issue comment <#> --body "Resolved in <PR URL>"` (do NOT close until merge).
+
+## Exit
+- PR URL. Surface to the caller.
+
+## Dreamers Kernel
+<dreamers-kernel>
+# Dreamers Kernel
+
+## Subagent allowlist (HARD RULE)
+
+Do not use any non-Dreamers agent unless explicitly authorized by user. Allowed Dreamers subagents: `sentinel`, `probe`, `hone`, `echo`, `sage`, `bolt`. NEVER `general-purpose`, NEVER `claude`, NEVER any other host-runtime agent.
+
+## Subagent prompt — required content
+
+Every `Agent` invocation MUST include in the prompt:
+- **Context** — what this agent is being asked to do and why
+- **Prior work** — what was done previously, with absolute paths to any output files
+- **What is needed** — specific deliverable
+- **Constraints** — hard rules the agent must not violate
+- **Definition of Done** — how to know the work is complete
+- **Plan file path** — absolute path to the relevant plan file (if applicable)
+- **Mandatory line:** `Do NOT call TaskCreate / TaskUpdate / TaskList. The command that invoked you owns its todo.`
+
+All `Agent` calls run synchronously (default) — the call blocks until the agent returns.
+
+## Continuation principle
+
+At every natural pause between phases — where the command has produced a meaningful result and the user could redirect — call `AskUserQuestion` with three choices: `Continue` / `Halt for now` / `Other` (freeform). Never silently advance; never silently stop. On `Halt`, emit a one-line resume command and stop.
+
+## Implementation discipline
+
+- **Plan adherence:** edit only files in the plan's scope. No while-I'm-here cleanup, no unrelated refactors mixed with feature work.
+- **No spec-arguing comments:** never add a code comment that argues the spec permits a pattern.
+- **Branch identity check:** before the first edit, `git log --oneline -3`. Confirm the branch and recent commits match the expected feature. If not, halt and surface.
+- **No dependency installs without permission.** Don't run `npm install`, `pip install`, etc. without explicit user approval.
+- **Type-check before declaring implementation done.** Run the project's type-check command from `CLAUDE.md` and fix errors before moving on.
+
+## Commit trailer
+
+Every commit body includes:
+
+```
+Co-authored-by: The Dreamers System
+```
+</dreamers-kernel>
+
+<git-workflow>
 # Git Workflow (mandatory)
 
 Every milestone uses a feature branch + PR — never work directly on the default branch.
@@ -74,3 +147,4 @@ Nothing in `.dreamers/` is committed — all workspace files (plans, retros, imp
 
 ## No worktrees
 The orchestrator works directly on the feature branch. Unless explicitly requested by the user.
+</git-workflow>

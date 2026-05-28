@@ -1,38 +1,30 @@
 ---
-description: 'Planning skill — 3-phase requirements conversation (Hash-out / Write / Review). Produces plan file(s) under .dreamers/plans/feature-<slug>/ and optional manifest. Hard-stops at the review gate; never implements. Triggers: /dreamers-plan, plan a feature, write a plan.'
+description: 'Docs skill — spawns Echo to update Echo-owned sections of CLAUDE.md plus other project docs (README, CHANGELOG) affected by recent changes. Echo stages edits; does not commit. Triggers: /dreamers-docs, update docs, echo docs update.'
 ---
 
 $ARGUMENTS
 
-If no task description was provided, halt + ask.
-
-Template read at runtime via `Read`:
-- `~/.claude/dreamers/templates/plan-writing-guide.md` — plan structure, naming, ACs, decomposition, manifest, ship-strategy heuristics.
-
 ## Todo - Before you begin.
 - Declare a todo list marking all steps at entry: Step 1 / Step 2 / Step 3.
 
-## Step 1 — Hash out
-- Write a one-paragraph understanding summary of the goal.
-- Identify ambiguities, gaps, open decisions. Ask all clarifying questions in ONE `AskUserQuestion` round.
-- Present the proposal + get explicit approval via `AskUserQuestion`. Non-approval = corrections; revise + re-present until approved.
-- Decide plan count + manifest per `plan-writing-guide.md`. Manifest backfill check: existing `feature-<slug>/` + `plan-01-*.md` + no `manifest.md` → manifest MUST be produced in Step 2.
+## Step 1 — Resolve diff scope
+- `--branch` (default): scope = `git diff --name-only origin/$DEFAULT...HEAD`.
+- `--staged`: scope = union of `git diff --cached --name-only` and `git diff --name-only`.
+- If the changed-files list is empty → output `No changes detected` and exit.
 
-## Step 2 — Write plans
-- Read `plan-writing-guide.md` in full via `Read`.
-- `mkdir -p .dreamers/plans/feature-<slug>/`.
-- Write each `plan-NN-<name>.md` + manifest if Step 1 decided yes.
-- Component-usage check: for shared components, grep the project source root for callers; include them in scope.
-- Citation accuracy: verify every cited artifact exists; mark unverifiable citations as "assumption pending verification."
-- Self-check the written plans against the guide before exit. Hard fail on any structural rule violation → halt + fix + re-check.
+## Step 2 — Spawn Echo
+- `Agent` invocation with `subagent_type: "echo"`. Prompt MUST include `Do NOT call TaskCreate / TaskUpdate / TaskList.`
+- Pass: context (ad-hoc or milestone close-out — caller-supplied), changed-files list, diff base, plan paths (if applicable), prior review summary (if applicable).
+- Constraint to Echo: edits docs only — no production code, no tests. Stage with `git add`; do NOT commit.
+- Wait for Echo to return its structured chat output.
 
-## Step 3 — Review gate
-- Present plan paths via `AskUserQuestion` with: `Approved` / `Minor edit` / `Major rewrite` / `Halt` / `Other`.
-- Minor edits applied inline + re-run Step 2 self-check + re-present.
-- Major rewrite → loop back to Step 1 with the correction as new context.
+## Step 3 — Handle output
+- `Docs updated — N files changed` → surface doc-changes log to user.
+- `No doc updates needed` → exit.
+- Open questions → present each via `AskUserQuestion`; capture answers; re-spawn Echo with clarification if needed.
 
 ## Exit
-- Surface plan paths. Hard stop — never invokes implementation.
+- Files Echo touched. The caller commits (this skill does NOT commit, push, or open a PR).
 
 ## Dreamers Kernel
 <dreamers-kernel>

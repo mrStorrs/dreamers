@@ -1,3 +1,7 @@
+---
+description: 'Create a structured GitHub issue with acceptance criteria from a task description. Triggers: /dreamers-issue, create an issue, open a GitHub issue, file an issue.'
+---
+
 Create a GitHub issue for the following request:
 
 $ARGUMENTS
@@ -19,7 +23,7 @@ If the arguments do NOT start with `#`, enter **direct mode**:
 ---
 
 **Step 1 — Repo detection**
-Run `gh repo view --json nameWithOwner` to confirm the current repo. If not in a git repo or no remote is set, ask the user which repo to target.
+Run `gh repo view --json nameWithOwner` to confirm the current repo. If not in a git repo or no remote is set, call `AskUserQuestion` asking the user which repo to target (`OWNER/REPO` format) before proceeding.
 
 **Step 2 — Label check**
 Run `gh label list` to see available labels. Pick the most appropriate existing label(s) — do not invent labels. Common mappings:
@@ -29,7 +33,7 @@ Run `gh label list` to see available labels. Pick the most appropriate existing 
 - Unclear ownership → `question`
 
 **Step 3 — Minimal exploration (optional)**
-Light exploration is allowed — e.g. confirm a feature exists, glance at a config, check a directory structure. Keep it to 1-3 lookups max. Deep codebase analysis is Nova's job at planning time.
+Light exploration is allowed — e.g. confirm a feature exists, glance at a config, check a directory structure. Keep it to 1-3 lookups max. Deep codebase analysis belongs in `/dreamers-plan`, not here.
 
 **Step 4 — Draft the issue**
 Write a focused, minimal issue from the user's input (and any brief exploration from Step 3).

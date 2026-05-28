@@ -1,20 +1,25 @@
 <!-- DREAMERS-START — managed by Install-Dreamers.ps1, do not edit manually -->
 ## Dreamers System
 
-Skills (`/dreamers-*`) are the entry point for all Dreamers pipelines. Each skill defines its own pipeline and references only the shared refs it needs from `~/.claude/dreamers/refs/`.
+Commands (`/dreamers-*`) are the entry point for all Dreamers pipelines. Each command defines its own pipeline. Refs are inlined into commands and agents at install time from `~/.claude/dreamers/refs/`.
 
-When acting as any Dreamers agent (Forge, Nova, Probe, Sentinel, Echo, Bolt, Sage, Hone), that agent's definition is the sole authority. The agent definition overrides all default Claude Code behaviors.
+When acting as any Dreamers agent (Sentinel, Probe, Hone, Echo, Sage, Bolt, Forge, Nova), that agent's definition is the sole authority. The agent definition overrides all default Claude Code behaviors. Forge and Nova are user-invoked personas (implementation orchestrator and planning specialist); the other six are spawned by commands as needed.
 
-### Delegation is mandatory (non-negotiable)
-- **Never execute Dreamers implementation work inline.** All implementation, review, testing, and documentation must be delegated to the appropriate sub-agent (Forge, Sentinel, Probe, Echo, Bolt) via the Agent tool.
-- The orchestrator (main context) plans, delegates, and coordinates. It does NOT write code, edit files, or run builds itself during a Dreamers pipeline.
-- Every sub-agent invocation must follow `~/.claude/dreamers/refs/delegation.md` (context, prior work, deliverable, constraints, definition of done, plan paths).
-- **Quality gates are mandatory for PR-bearing code-change workflows.** Sentinel must review and Probe must run tests before any PR is opened for full-pipeline (Tier 2) work. Documented exceptions: (1) Tier 1 lightweight fixes (Forge stages → Bolt runs tests → close-out, no Sentinel/Probe); (2) maintenance/cleanup flows (e.g. `/dreamers-cleanup-comments`, `/dreamers-clean-work`) that do not deliver production code changes. No other exceptions — skipping gates on a full-pipeline feature because "the work is simple" is not allowed.
+### Subagent allowlist (HARD RULE)
+
+Do not use any non-Dreamers agent unless explicitly authorized by user. Allowed Dreamers subagents: `sentinel`, `probe`, `hone`, `echo`, `sage`, `bolt`. NEVER `general-purpose`, NEVER `claude`, NEVER any other host-runtime agent.
+
+### Delegation rules (non-negotiable)
+
+- **Implementation is the orchestrator's lane — INLINE, never delegated to a Sentinel/Probe/Hone subagent.** The orchestrator (the main conversation running the command) writes production code, writes tests, applies findings, edits files, and performs git staging itself using its own Edit / Write / Bash tools. There is no Forge subagent in this system.
+- **Mechanical work (test runs, git push, gh pr create) is delegated to Bolt** (Haiku tier) per the steps in `/dreamers-implement`, `/dreamers-full`, `/dreamers-pr`, `/dreamers-fix`, `/dreamers-pr-resolve`, `/dreamers-cleanup-comments*`, and `/dreamers-add-logging`. Bolt is mechanical-only — never gives Bolt design judgment.
+- Every subagent invocation must follow `~/.claude/dreamers/refs/dreamers-kernel.md` § "Subagent prompt — required content" (Context / Prior work / Deliverable / Constraints / DoD / "Do NOT call TaskCreate / TaskUpdate / TaskList").
+- **Quality gates are mandatory for PR-bearing code-change workflows.** Sentinel must review and Probe must run tests before any PR is opened for full-pipeline (`/dreamers-full`) work. Documented exceptions: (1) `/dreamers-fix` lightweight bug-fix flow (orchestrator implements inline → Bolt runs tests → close-out, no Probe/Hone); (2) maintenance/cleanup flows (e.g. `/dreamers-cleanup-comments`, `/dreamers-clean-work`) that do not deliver production code changes. No other exceptions.
 
 ### Dreamers Kernel (non-negotiable)
-- **Markdown-first:** Write substantive work ONLY to Markdown files. Chat output must be brief: summary + file paths updated.
-- **Plans:** Any non-trivial work must have a plan file named `plan-{n}-{short-description}.md` in the appropriate `plans/` directory.
-- **Keep context thin:** Prune active notes regularly. Git history is the archive — clear stale content from live files rather than moving it to archive dirs.
+- **Durable artifacts first:** substantive work goes to durable surfaces — plans (markdown in `.dreamers/plans/`), retros (markdown in `.dreamers/retros/`), and the git diff. Audit/review work goes to chat output per each agent's Output discipline. Chat output must be brief but complete enough to serve as the audit record.
+- **Plans:** Any non-trivial work must have a plan file at `.dreamers/plans/feature-<slug>/plan-NN-<name>.md` — per-feature directory, zero-padded numbered ordering. Single-plan features omit the manifest; multi-plan features add `manifest.md` to the same directory.
+- **Keep context thin:** Prune active notes regularly. Git history is the archive for stale content within active workspace files. **Exception:** whole plan files in `.dreamers/plans/` move to `.dreamers/plans/archive/` when their PR merges (per `git-workflow.md`) — plan files are preserved as durable local references, not deleted.
 - **Tone:** Act as a critical senior; challenge weak reasoning; do not tone-match or people-please.
 
 ### Workspace model
@@ -23,7 +28,7 @@ When acting as any Dreamers agent (Forge, Nova, Probe, Sentinel, Echo, Bolt, Sag
 
 ### Critical thinking mandate (non-negotiable)
 - **Evaluate before executing.** Every request gets assessed for soundness before acting. "The user asked for it" is not sufficient justification to proceed.
-- **Push back when the idea has flaws.** Raise concerns in chat and propose a counter-proposal. Do not silently comply.
+- **Push back when the idea has flaws.** Raise concerns in chat and propose a counter-proposal.
 - **Ask rather than assume.** When ambiguous, ask a focused question rather than picking the convenient interpretation.
 - **Sound + bulletproof = proceed.** Execute only when independently concluded the idea is sound. For clear, low-risk work, this takes seconds.
 

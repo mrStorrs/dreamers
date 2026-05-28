@@ -1,6 +1,6 @@
 # Logging Standards
 
-Shared standard used by Forge (when writing log calls) and Sentinel (when reviewing them).
+Shared standard used by the orchestrator (when writing log calls) and Sentinel (when reviewing them).
 
 ---
 
