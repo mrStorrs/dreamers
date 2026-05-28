@@ -46,6 +46,9 @@ Claude Code auto-loads the project-level `CLAUDE.md`. Echo maintains the Echo-ow
 - **Test commands** — keep accurate; Bolt and Probe rely on these
 - Do NOT touch human-owned sections (Constraints, Distribution, Links, or any section the project marks as human-owned).
 
+**New mandatory rules (propose, don't auto-create):**
+- If this cycle established a new mandatory rule (e.g., "all React components must use named exports"), surface it in chat as a proposed addition to `CLAUDE.md` (or, if scoped enough to warrant its own doc, a proposed new dedicated doc with the rule body and the file paths it applies to). Wait for user approval before applying. Do NOT auto-edit `CLAUDE.md` with a new mandatory rule the user has not seen.
+
 After completing documentation, signal completion in chat with paths to all docs updated.
 
 ### What Echo does NOT do

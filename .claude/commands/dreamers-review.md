@@ -100,7 +100,8 @@ Co-authored-by: The Dreamers System
 Reviewers are read-only / report-only. The caller applies fixes per its own orchestrator-as-fixer behavior.
 </reviewer-findings-format>
 
-## Logging discipline (reviewer lens)
+<logging-discipline-review>
+# Logging Discipline (reviewer lens)
 
 When Sentinel reviews log calls in the diff:
 
@@ -112,6 +113,7 @@ When Sentinel reviews log calls in the diff:
 3. **Never-log violations are `security` severity.** Secrets, tokens, PII, or full request/response bodies in any log call → flag at `security` regardless of lens.
 
 Severity mapping: never-log violation → `security`; library/format/level deviation → `maintainability`. Findings follow the format in `reviewer-findings-format` (Kernel).
+</logging-discipline-review>
 
 <agent-recovery>
 # Agent Failure Recovery (mandatory)

@@ -3,7 +3,7 @@
 
 Commands (`/dreamers-*`) are the entry point for all Dreamers pipelines. Each command defines its own pipeline. Refs are inlined into commands and agents at install time from `~/.claude/dreamers/refs/`.
 
-When acting as any Dreamers agent (Sentinel, Probe, Hone, Echo, Sage, Bolt), that agent's definition is the sole authority. The agent definition overrides all default Claude Code behaviors.
+When acting as any Dreamers agent (Sentinel, Probe, Hone, Echo, Sage, Bolt, Forge, Nova), that agent's definition is the sole authority. The agent definition overrides all default Claude Code behaviors. Forge and Nova are user-invoked personas (implementation orchestrator and planning specialist); the other six are spawned by commands as needed.
 
 ### Subagent allowlist (HARD RULE)
 

@@ -18,16 +18,18 @@ Everything lives under `.claude/`:
 
 ## Agents
 
-| Agent | Role | Model |
-|---|---|---|
-| **Sentinel** | Reviewer — correctness, security, maintainability. Read-only / report-only. | Sonnet |
-| **Probe** | Reviewer — test coverage (AC matrix, layer audit, edge cases, regression risk). Read-only / report-only. | Sonnet |
-| **Hone** | Reviewer — simplicity, over-engineering, redundancy, architectural quality. Read-only / report-only; surfaces full-refactor recommendations without softening. | Sonnet |
-| **Echo** | Documentarian — project docs, README, CHANGELOG, Echo-owned sections of CLAUDE.md. | Haiku |
-| **Sage** | Researcher — deep multi-perspective research with citation verification. | Opus |
-| **Bolt** | Runner — mechanical tasks: test runs, git push, `gh pr create`, status checks. Fire-and-forget. | Haiku |
+| Agent | Type | Role | Model |
+|---|---|---|---|
+| **Forge** | Persona | Implementation orchestrator. User-invoked session pre-loaded with the Dreamers pipeline. Routes user intent to the right command. | Sonnet |
+| **Nova** | Persona | Planning specialist. Mirrors the `/dreamers-plan` 3-phase flow; hard-stops at the approval gate. | Sonnet |
+| **Sentinel** | Subagent | Reviewer — correctness, security, maintainability. Read-only / report-only. | Sonnet |
+| **Probe** | Subagent | Reviewer — test coverage (AC matrix, layer audit, edge cases, regression risk). Read-only / report-only. | Sonnet |
+| **Hone** | Subagent | Reviewer — simplicity, over-engineering, redundancy, architectural quality. Read-only / report-only; surfaces full-refactor recommendations without softening. | Sonnet |
+| **Echo** | Subagent | Documentarian — project docs, README, CHANGELOG, Echo-owned sections of CLAUDE.md. | Haiku |
+| **Sage** | Subagent | Researcher — deep multi-perspective research with citation verification. | Opus |
+| **Bolt** | Subagent | Runner — mechanical tasks: test runs, git push, `gh pr create`, status checks. Fire-and-forget. | Haiku |
 
-Sentinel + Probe + Hone spawn in parallel per cycle via `/dreamers-review`. Echo spawns per milestone via `/dreamers-docs`. Sage is invoked by `/dreamers-research`. Bolt is invoked from the pipeline commands for mechanical work.
+Forge and Nova are personas the user enters when they want a multi-turn session focused on that role. They are NOT spawned by commands. Sentinel + Probe + Hone spawn in parallel per cycle via `/dreamers-review`. Echo spawns per milestone via `/dreamers-docs`. Sage is invoked by `/dreamers-research`. Bolt is invoked from the pipeline commands for mechanical work.
 
 ## Commands
 

@@ -117,7 +117,7 @@ Call `AskUserQuestion` with `["Approved — apply cleanup", "Halt for now", "Oth
 
 Edit files inline; stage with `git add`. Follow `dreamers-kernel.md` implementation discipline: only edit files in scope; no while-I'm-here changes to actual logic.
 
-Run the project's type-check command after edits (comments don't usually affect type-check but verify).
+Spawn Bolt (`subagent_type: "bolt"`) to run the project's type-check command after edits (comments don't usually affect type-check but verify).
 
 ## Phase 4 — Optional Sentinel review
 

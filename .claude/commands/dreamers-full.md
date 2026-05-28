@@ -313,7 +313,8 @@ Comments must add value that the code cannot express itself. Concise, no fluff, 
 - If a comment requires more than two lines to be useful, the code needs refactoring, not more words
 </comment-rules>
 
-## Logging discipline
+<logging-discipline>
+# Logging Discipline
 
 When adding or modifying log calls during implementation:
 
@@ -326,6 +327,7 @@ When adding or modifying log calls during implementation:
 3. **Neither yields a clear answer** → raise an open question via `AskUserQuestion` rather than guessing.
 
 Do not add log calls outside the plan's scope as while-I'm-here cleanup. If the plan does not call for new logging, leave existing logging untouched unless a finding requires a change.
+</logging-discipline>
 
 <reviewer-findings-format>
 # Reviewer Findings Format

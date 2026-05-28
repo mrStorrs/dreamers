@@ -95,7 +95,7 @@ Call `AskUserQuestion` with `["Approved — apply changes", "Halt for now", "Oth
 
 Apply the approved changes inline. Stage with `git add` as you go. Follow `dreamers-kernel.md` implementation discipline — only edit files in scope; no while-I'm-here cleanup.
 
-Run the project's type-check command after edits. Fix any type errors.
+Spawn Bolt (`subagent_type: "bolt"`) to run the project's type-check command after edits. Fix any type errors inline based on Bolt's report.
 
 ## Phase 4 — Optional Sentinel review
 
