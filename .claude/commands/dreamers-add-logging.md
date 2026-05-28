@@ -1,89 +1,109 @@
-Add comprehensive, production-grade logging to the project. Work through the phases in order. Do not touch code until the user approves the audit findings.
+---
+description: 'Phased pass to add or improve project logging per logging-standards.md. Audit current state → propose changes → user approval → implement inline → optional Sentinel review. Triggers: /dreamers-add-logging, add logging, improve logging, audit log calls.'
+---
 
-Read these refs:
-- `~/.claude/dreamers/refs/git-workflow.md`
-- `~/.claude/dreamers/refs/delegation.md`
+Also load at runtime (not inlined — these are templates / project files):
+- `~/.claude/dreamers/templates/logging-standards.md` — the binding spec
+- `CLAUDE.md` (project, if present) — project-specific logging conventions (logger library, format)
 
-Follow the Dreamers Kernel and output discipline from `CLAUDE.md`.
+<dreamers-kernel>
+# Dreamers Kernel
+
+## Subagent allowlist (HARD RULE)
+
+Do not use any non-Dreamers agent unless explicitly authorized by user. Allowed Dreamers subagents: `sentinel`, `probe`, `hone`, `echo`, `sage`, `bolt`. NEVER `general-purpose`, NEVER `claude`, NEVER any other host-runtime agent.
+
+## Subagent prompt — required content
+
+Every `Agent` invocation MUST include in the prompt:
+- **Context** — what this agent is being asked to do and why
+- **Prior work** — what was done previously, with absolute paths to any output files
+- **What is needed** — specific deliverable
+- **Constraints** — hard rules the agent must not violate
+- **Definition of Done** — how to know the work is complete
+- **Plan file path** — absolute path to the relevant plan file (if applicable)
+- **Mandatory line:** `Do NOT call TaskCreate / TaskUpdate / TaskList. The command that invoked you owns its todo.`
+
+All `Agent` calls run synchronously (default) — the call blocks until the agent returns.
+
+## Continuation principle
+
+At every natural pause between phases — where the command has produced a meaningful result and the user could redirect — call `AskUserQuestion` with three choices: `Continue` / `Halt for now` / `Other` (freeform). Never silently advance; never silently stop. On `Halt`, emit a one-line resume command and stop.
+
+## Implementation discipline
+
+- **Plan adherence:** edit only files in the plan's scope. No while-I'm-here cleanup, no unrelated refactors mixed with feature work.
+- **No spec-arguing comments:** never add a code comment that argues the spec permits a pattern.
+- **Branch identity check:** before the first edit, `git log --oneline -3`. Confirm the branch and recent commits match the expected feature. If not, halt and surface.
+- **No dependency installs without permission.** Don't run `npm install`, `pip install`, etc. without explicit user approval.
+- **Type-check before declaring implementation done.** Run the project's type-check command from `CLAUDE.md` and fix errors before moving on.
+
+## Commit trailer
+
+Every commit body includes:
+
+```
+Co-authored-by: The Dreamers System
+```
+</dreamers-kernel>
 
 $ARGUMENTS
 
 ---
 
-## Phase 1 — Audit (do this directly, no agents)
+## Todo list
 
-**Stack detection:**
-- Read `CLAUDE.md` (project-level), `package.json`, `build.gradle`, `pyproject.toml`, `go.mod` — whatever exists
-- Identify: language(s), runtime, existing dependencies, package manager
+At skill entry, declare via `TaskCreate`:
+- [ ] Phase 1 — audit current logging state
+- [ ] Phase 2 — proposal + user approval
+- [ ] Phase 3 — implement approved changes
+- [ ] Phase 4 — optional Sentinel review
+- [ ] Phase 5 — commit
 
-**Existing logging inventory:**
-- Search for `console.log`, `console.error`, `console.warn`, `print(`, `println(`, `Log.d(`, `Log.e(`, `logger.`, `logging.` and any existing logging framework imports
-- Note: how many, where, what kind (debug noise vs. genuine signal)
-
-**Key instrumentation areas:**
-- Identify: app entry point / startup, server/service init, route handlers or API endpoints, database access layer, external API/HTTP calls, auth flows, background jobs or workers, top-level error handlers
-
-**Framework recommendation:**
-Based on detected stack, recommend one framework. Common mappings:
-- Node.js / TypeScript → **pino** or **winston**
-- Python → **structlog** or **loguru**
-- Kotlin / Android → **Timber**
-- Go → **zap** or **slog**
-- Other → surface to user and ask
-
-**Surface to user:**
-1. Detected stack and package manager
-2. Existing logging found (count, locations, quality assessment)
-3. Recommended framework + rationale + rejected alternative(s)
-4. Areas that will be instrumented
-5. Ask: **"Does this look right? Approve or tell me what to adjust."**
-
-Do not proceed until the user explicitly approves.
+Mark each item `in_progress` when starting, `completed` when done. Never batch completions at the end.
 
 ---
 
-## Phase 2 — Branch setup
+## Phase 1 — Audit
 
-```
-DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
-git checkout "$DEFAULT_BRANCH" && git pull origin "$DEFAULT_BRANCH"
-git checkout -b chore/add-logging
-```
+Scope: project source root by default; `--scope <path>` to restrict.
 
----
+Walk the scope and identify:
+- Functions with no logging where DEBUG entry/exit would help.
+- Branches without log statements that affect business outcomes.
+- ERROR-level logs missing stack traces.
+- INFO logs that include secrets, PII, or full request bodies (NEVER-LOG violations — high priority).
+- DEBUG logs in high-frequency loops without `// high-freq` annotation.
+- Log calls using the wrong level (e.g., ERROR for recoverable issues; INFO for incoming requests with full bodies).
 
-## Phase 3 — Forge implementation
+Produce an audit summary in chat: file path → issues found.
 
-Invoke Forge (follow delegation.md). Forge's task:
+## Phase 2 — Proposal + user approval
 
-- Install the approved framework using the project's package manager
-- Set up central logger module with dev (pretty-printed) and prod (structured JSON) modes
-- Follow `~/.claude/dreamers/templates/logging-standards.md`
-- Replace existing raw logging with appropriate log level calls
-- Add logging to instrumentation areas from Phase 1
+Present the proposed changes in chat:
+- List of files to modify, with one-line summary per file.
+- Net adds vs net changes (e.g., "12 new DEBUG calls, 3 ERROR-level fixes, 2 NEVER-LOG violations to remove").
+- Any logger-library / format conventions detected from existing code (so additions are consistent).
 
-Single commit: `chore: add structured logging with [framework name]`
+Call `AskUserQuestion` with `["Approved — apply changes", "Halt for now", "Other"]`. Freeform corrections go through Other.
 
----
+- Approved → proceed to Phase 3.
+- Halt for now → output "Audit complete. No changes applied. Resume by re-invoking `/dreamers-add-logging`." and stop.
+- Corrections → revise proposal; re-present. Loop until approved.
 
-## Phase 4 — Sentinel review
+## Phase 3 — Implement
 
-Invoke Sentinel (follow delegation.md). Focus areas:
-- Log calls exposing PII, credentials, or sensitive data
-- Log calls in tight loops or hot paths at INFO level
-- Missing stack traces on ERROR-level catches
-- Inconsistent log levels
-- Raw print/console calls Forge missed
+Apply the approved changes inline. Stage with `git add` as you go. Follow `dreamers-kernel.md` implementation discipline — only edit files in scope; no while-I'm-here cleanup.
 
-Re-review only if findings include critical or high severity.
+Run the project's type-check command after edits. Fix any type errors.
 
----
+## Phase 4 — Optional Sentinel review
 
-## Phase 5 — PR (Bolt)
+Call `AskUserQuestion` with `["Yes — review before commit", "No — skip review", "Other"]`.
 
-Invoke **Bolt** to handle the mechanical close-out:
-- Push the branch
-- Open PR with title: `chore: add structured logging with [framework name]`
-- Body: framework chosen, environments configured, areas instrumented, noise removed
+- Yes → invoke `subagent_type: "sentinel"` with the changed-files scope. Sentinel reviews under correctness/security/maintainability lenses; comment-rules + logging-standards violations surface here. Apply findings inline.
+- No → proceed to commit.
 
-Bolt reports the PR URL.
+## Phase 5 — Commit
+
+`git status` to confirm staged content. Commit message: `chore: improve logging per logging-standards.md` (or appropriate). Do NOT push (user pushes when ready, or invokes `/dreamers-pr` to push + open the PR).

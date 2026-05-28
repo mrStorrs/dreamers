@@ -1,3 +1,49 @@
+---
+description: 'Standalone Probe review (test coverage audit). Read-only — returns structured findings on AC coverage, layer audit, edge cases, regression risks. No auto-fix. Triggers: /dreamers-test, test coverage audit, audit tests, check test gaps.'
+---
+
+<dreamers-kernel>
+# Dreamers Kernel
+
+## Subagent allowlist (HARD RULE)
+
+Do not use any non-Dreamers agent unless explicitly authorized by user. Allowed Dreamers subagents: `sentinel`, `probe`, `hone`, `echo`, `sage`, `bolt`. NEVER `general-purpose`, NEVER `claude`, NEVER any other host-runtime agent.
+
+## Subagent prompt — required content
+
+Every `Agent` invocation MUST include in the prompt:
+- **Context** — what this agent is being asked to do and why
+- **Prior work** — what was done previously, with absolute paths to any output files
+- **What is needed** — specific deliverable
+- **Constraints** — hard rules the agent must not violate
+- **Definition of Done** — how to know the work is complete
+- **Plan file path** — absolute path to the relevant plan file (if applicable)
+- **Mandatory line:** `Do NOT call TaskCreate / TaskUpdate / TaskList. The command that invoked you owns its todo.`
+
+All `Agent` calls run synchronously (default) — the call blocks until the agent returns.
+
+## Continuation principle
+
+At every natural pause between phases — where the command has produced a meaningful result and the user could redirect — call `AskUserQuestion` with three choices: `Continue` / `Halt for now` / `Other` (freeform). Never silently advance; never silently stop. On `Halt`, emit a one-line resume command and stop.
+
+## Implementation discipline
+
+- **Plan adherence:** edit only files in the plan's scope. No while-I'm-here cleanup, no unrelated refactors mixed with feature work.
+- **No spec-arguing comments:** never add a code comment that argues the spec permits a pattern.
+- **Branch identity check:** before the first edit, `git log --oneline -3`. Confirm the branch and recent commits match the expected feature. If not, halt and surface.
+- **No dependency installs without permission.** Don't run `npm install`, `pip install`, etc. without explicit user approval.
+- **Type-check before declaring implementation done.** Run the project's type-check command from `CLAUDE.md` and fix errors before moving on.
+
+## Commit trailer
+
+Every commit body includes:
+
+```
+Co-authored-by: The Dreamers System
+```
+</dreamers-kernel>
+
+<testing-mandate>
 # Testing Coverage Mandate (MANDATORY)
 
 Every plan must express its test coverage intent through the Acceptance Criteria's Layer annotations. The planner specifies *what observable outcome* the AC requires and *which test layer* covers it. The implementer (orchestrator at `/dreamers-implement` Step 1) writes the actual tests from each AC's Given/When/Then.
@@ -60,3 +106,43 @@ Each project that uses `/dreamers-implement` maintains a `./test-benchmarks.md` 
 - **Recommended-timeout formula:** `max(last_run_time × 2, 30s)` — the 2× multiplier accounts for machine variance; 30s is a non-negotiable floor.
 - **Orchestrator updates** the row for each test command after every successful test run. **Humans may edit** the `Notes` column to capture CI environment factors or known flakiness.
 - Template: `~/.claude/dreamers/templates/test-benchmarks.md`.
+</testing-mandate>
+
+$ARGUMENTS
+
+---
+
+## Argument parsing
+
+Default scope (no flags): staged + unstaged changes.
+
+- `--branch` — scope to feature-branch diff vs default:
+  ```bash
+  DEFAULT=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+  [ -z "$DEFAULT" ] && DEFAULT=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || echo "main")
+  ```
+- `--paths <glob>` — scope to files matching the glob.
+- `--all` — entire codebase. Emit a chat warning before invoking; rare.
+
+---
+
+## Spawn Probe
+
+Invoke via `Agent` with:
+
+```
+subagent_type: "probe"
+prompt:
+  Context: Standalone test-coverage audit via /dreamers-test. No plan binding (ad-hoc audit).
+  Scope: <list of files from arg parsing above>
+  Branch: <current feature branch>
+  Default branch: <detected default>
+  Lens: test coverage (AC matrix is N/A here — no plan binding; focus on layer audit + edge cases + regression risks for the scope).
+  Return: status line + severity-graded findings + observations + open questions.
+```
+
+## Output
+
+Pass Probe's chat output through to the user verbatim. Do NOT write any tests — this is a read-only audit. Surface any `Blocked` status or open questions for user follow-up.
+
+If the user wants missing tests written from the findings, suggest: "Run `/dreamers-implement` with a plan that addresses these coverage gaps."

@@ -1,48 +1,77 @@
-Run a between-milestone maintenance pass. No implementation, no planning, no agents — do all of this directly.
+---
+description: 'Between-milestone maintenance pass: prune stale files, archive merged plans, audit improvements.md, scan for project-state drift. All inline — no subagents. Triggers: /dreamers-clean-work, clean up, maintenance pass, between milestones.'
+---
 
-Follow the Dreamers Kernel and output discipline from `CLAUDE.md`.
+Run a between-milestone maintenance pass. No implementation, no planning, no subagents — do all of this directly.
+
+Follow the Dreamers Kernel and output discipline from `~/.claude/CLAUDE.md`.
 
 $ARGUMENTS
 
-**Step 1 — Improvements audit**
-Read `.dreamers/atlas/improvements.md` (repo-local). For each open item:
+---
+
+## Todo list
+
+At skill entry, declare via `TaskCreate`:
+- [ ] Step 1 — improvements audit
+- [ ] Step 2 — plan file archive
+- [ ] Step 3 — legacy workspace cleanup (recommend only)
+- [ ] Step 4 — project state contradiction scan
+- [ ] Step 5 — report
+
+Mark each item `in_progress` when starting, `completed` when done. Never batch completions at the end.
+
+---
+
+## Step 1 — Improvements audit
+
+Read `.dreamers/improvements.md` (repo-local). For each open item:
 - Decide: action now, defer with a reason, or close as no longer relevant.
 - If actionable as a direct text edit to an agent file or ref (meta work): make the edit now.
-- If it requires Forge or a full pipeline: defer it — add a note with why and which skill to use.
+- If it requires a full pipeline (`/dreamers-full`): defer it — add a note with why and which skill to use.
 - Remove actioned/closed items. Leave only open deferred items with defer reasons.
 
-**Step 2 — Plan file cleanup**
-In `.dreamers/plans/` (repo-local), for each `plan-*.md`:
+## Step 2 — Plan file archive
+
+In `.dreamers/plans/` (repo-local), for each `plan-*.md` (excluding files already in `archive/`):
 - Check if its associated PR is merged (`gh pr list --state merged` or `gh pr view <number>`).
-- **Merged:** delete the plan file. The PR description is the lasting record.
+- **Merged:** move the plan file to `.dreamers/plans/archive/` (create the dir if it doesn't exist). The PR description is the lasting public record; the archived file stays for easy local reference. Use `mv` (or `Move-Item`), never delete.
 - **Open or not yet created:** leave it.
-- Report what was deleted and what was kept (with reason).
+- Report what was archived and what was kept (with reason).
 
-**Step 3 — Workspace file reset (Bolt)**
-Invoke **Bolt** to wipe all live status files in `.dreamers/` (repo-local) back to "No active work / No pending items":
-- `forge/status.md`, `probe/status.md`, `sentinel/status.md`
-- Use `printf 'No active work.\n' > <path>` for each file.
+## Step 3 — Legacy workspace cleanup (one-time)
 
-After Bolt completes, prune any workspace file (across all agents) that exceeds ~200 lines or ~20KB — delete stale content, rewrite to only current actionable items (this requires judgment — do it directly).
+The legacy multi-agent pipeline wrote per-cycle workspace artifacts under `.dreamers/{forge,probe,hone,sentinel,echo}/`. The current pipeline writes none of those — Sentinel, Probe, Hone, and Echo do not maintain workspace files.
 
-**Step 4 — Memory integrity + contradiction scan**
+If any of those directories exist, the user is welcome to delete them:
 
-**4a — Stale index entries:** Read `MEMORY.md` in `~/.claude/projects/[repo]/memory/`. For every file referenced in the index, verify the file exists. If a referenced file is missing, remove the stale entry from `MEMORY.md` immediately (stale pointers are worse than missing entries — they cause agents to invent behavior from an index line alone).
+```bash
+# Unix / macOS
+rm -rf .dreamers/{forge,probe,hone,sentinel,echo}
+```
 
-**4b — Orphan files:** List all `.md` files in the memory directory. If any file exists but is NOT referenced in `MEMORY.md`, either add an index entry or delete the file (ask user if unclear).
+```powershell
+# Windows PowerShell
+Remove-Item -Recurse -Force .dreamers\forge, .dreamers\probe, .dreamers\hone, .dreamers\sentinel, .dreamers\echo
+```
 
-**4c — Content freshness:** Read all memory files. Check for:
-- Tech stack drift
-- Architecture pivots not propagated
-- Milestone status that has fallen behind
-- Rule conflicts across agent definitions
-- Feedback memories that have since been baked into CLAUDE.md, agent definitions, or refs (these are stale — propose deletion)
+Do NOT auto-delete — surface as a recommendation. The user may want to keep historical workspace files for reference.
 
-**Propose** all memory changes to the user — do not auto-apply. Present a list and wait for approval. Exception: stale index entries pointing to nonexistent files can be removed without asking.
+## Step 4 — Project state contradiction scan
 
-**Step 5 — Report**
+Read these durable surfaces and check for drift / contradictions:
+- `.dreamers/improvements.md` — open items still relevant?
+- `.dreamers/plans/` — any leftover plans from merged PRs (covered in Step 2)?
+- `.dreamers/retros/` — anything stale or contradicted by recent work?
+- Project-level `CLAUDE.md` Echo-owned sections (Tech stack, Repo structure, Conventions, Key files) — match the actual codebase?
+- Recent `git log` on the default branch — major shifts (tech stack, architecture, tooling) reflected in `CLAUDE.md`?
+
+**Propose** all changes to the user — do not auto-apply. Present a numbered list of proposed updates, then call `AskUserQuestion` (multi-select) with one option per proposed change plus `"Apply none"` and `"Other"` for freeform direction. Apply only the items the user selects. Exception: clearly stale entries pointing to nonexistent files can be removed without asking.
+
+## Step 5 — Report
+
 Summarise in chat:
 - Improvements actioned / deferred / closed (one line each)
-- Plan files deleted / kept
-- Workspace files pruned
+- Plan files archived / kept
+- Legacy workspace recommendations (if any)
 - Proposed memory updates (if any)

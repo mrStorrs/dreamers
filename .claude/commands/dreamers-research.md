@@ -1,6 +1,23 @@
+---
+description: 'Deep research with phased workflow: scoping, parallel sub-topic research, synthesis, final report. Triggers: /dreamers-research, research, deep research, investigate, find out about.'
+---
+
 Deep research skill with phased workflow: preliminary scoping → user selection → parallel research/review loops.
 
 $ARGUMENTS
+
+---
+
+## Todo list
+
+At skill entry, declare via `TaskCreate`:
+- [ ] Phase 1 — preliminary scoping (Sage identifies sub-topics)
+- [ ] Phase 1.5 — user sub-topic selection gate
+- [ ] Phase 2 — parallel research + review per selected sub-topic
+- [ ] Phase 3 — synthesis (Sage merges sub-topic reports)
+- [ ] Phase 4 — delivery + next-step prompt
+
+Mark each item `in_progress` when starting, `completed` when done. Never batch completions at the end.
 
 ---
 
@@ -8,7 +25,7 @@ $ARGUMENTS
 
 **Objective:** Identify sub-topics within the main research topic before committing to deep research.
 
-Invoke **Sage** (subagent_type: `sage`) with:
+Invoke **Sage** (`subagent_type: "sage"`) with:
 - **Mode:** preliminary
 - **Task:** Identify 5-10 distinct sub-topics/dimensions of the research question
 - **Output:** `scope.md` with numbered sub-topics, each with:
@@ -32,26 +49,13 @@ Conduct preliminary research to identify the key sub-topics within this domain.
 Do NOT do deep research yet. This is scoping only.
 ```
 
-After Sage returns, present the sub-topics to the user in chat:
-```
-## Research Scope: [Topic]
+After Sage returns, present the sub-topics to the user and call `AskUserQuestion` with multi-select enabled, one option per sub-topic plus a `"Cancel research"` option:
 
-Sage identified the following sub-topics:
+- Multi-select choices: each sub-topic labeled `"N. <Title> — <description> (recommended: <depth>)"`.
+- Add: `"Cancel research"` (single-select intent — if chosen, halt).
+- Add: `"Other"` (freeform for user redirects like "research 1 and 2 with deeper depth").
 
-1. **[Title]** — [description] (recommended: [depth])
-2. **[Title]** — [description] (recommended: [depth])
-...
-
-**Select which to research:**
-- "all" — research all sub-topics
-- "1, 3, 5" — research specific numbers
-- "1-4" — research a range
-- "none" — cancel
-
-Which sub-topics should I research?
-```
-
-**Do not proceed to Phase 2 until user explicitly selects sub-topics.**
+**Do not proceed to Phase 2 until the user explicitly selects at least one sub-topic.** If the user picks `Cancel research`, halt cleanly with status `Phase 1 complete; no deep research performed.`
 
 ---
 
@@ -119,7 +123,7 @@ Sub-topic 4: [Research] → [Review] ─┤
 Sub-topic 5: [Research] → [Review] ─┘
 ```
 
-Launch all research calls in parallel (single message with multiple Agent tool invocations).
+Launch all research calls in parallel via the runtime's batched-spawn mechanism (whatever it surfaces for multiple concurrent agent invocations).
 When a research call completes, immediately launch its review call.
 Track completion status for each sub-topic.
 
